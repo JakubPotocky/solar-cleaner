@@ -4,7 +4,7 @@ import sys
 import time
 import paho.mqtt.client as mqtt
 
-BROKER = "10.202.83.174"
+BROKER = "192.168.137.121"
 PORT = 1883
 TOPIC = "robot-movement"
 CLIENT_ID = "mqtt-subscriber"
