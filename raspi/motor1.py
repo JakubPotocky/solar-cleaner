@@ -40,7 +40,7 @@ pi.write(DIR_PIN, 1)
 pi.write(DIR_PIN2, 0)
 
 # Max speed (255 = 100%)
-pi.set_PWM_dutycycle(PWM_PIN, 255)
+pi.set_PWM_dutycycle(PWM_PIN, 155)
 
 print("Motor running at full speed. Press Ctrl + C to stop.")
 
