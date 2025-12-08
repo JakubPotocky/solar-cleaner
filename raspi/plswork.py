@@ -1,8 +1,10 @@
 import pigpio
 import time
 
-PWM_PIN = 13   # PWM pin
-DIR_PIN = 26   # Direction pin
+PWM_PIN = 33   # PWM pin
+DIR_PIN = 37   # Direction pin
+DIR_PIN2 = 36   # Direction pin
+
 FREQ = 20000   # 20 kHz
 
 # Connect to pigpio daemon
