@@ -11,7 +11,7 @@ DIR_PIN2_A = 16   # physical 36
 # Motor B – BCM numbers
 PWM_PIN_B  = 12   # physical 32
 DIR_PIN_B  = 23   # physical 16
-DIR_PIN2_B = 24   # physical 8
+DIR_PIN2_B = 24   # physical 18
 
 FREQ = 20000  # 20 kHz
 
