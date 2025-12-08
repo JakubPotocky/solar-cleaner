@@ -4,9 +4,9 @@ import signal
 import sys
 
 # BCM numbers (NOT physical pins)
-PWM_PIN = 12    # motor 1: 13
-DIR_PIN = 23    # motor 1: 26
-DIR_PIN2 = 24   # motor 1: 16
+PWM_PIN = 12    # motor 1: 13 :: 12
+DIR_PIN = 23    # motor 1: 26 :: 23
+DIR_PIN2 = 24   # motor 1: 16 :: 24
 
 FREQ = 20000    # 20 kHz
 
