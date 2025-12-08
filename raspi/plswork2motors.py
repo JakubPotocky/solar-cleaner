@@ -9,7 +9,7 @@ DIR_PIN_A  = 26   # physical 37
 DIR_PIN2_A = 16   # physical 36
 
 # Motor B – BCM numbers
-PWM_PIN_B  = 18   # physical 12 (PWM0)
+PWM_PIN_B  = 12   # physical 12 (PWM0)
 DIR_PIN_B  = 23   # physical 16
 DIR_PIN2_B = 24   # physical 18
 
