@@ -15,13 +15,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _goToHome() {
     final name = _nameController.text.trim();
-    if (name.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please enter your user.')));
-      return;
-    }
-
     if (_demoMode) {
       Navigator.of(
         context,
@@ -101,15 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             textInputAction: TextInputAction.done,
                             onFieldSubmitted: (_) => _goToHome(),
                           ),
-                const SizedBox(height: 12),
-                // Keep the demo toggle instead of password
-                          SwitchListTile(
-                            activeColor: Color.fromARGB(255, 28, 41, 61),
-                            title: const Text('Demo mode', style: TextStyle(color: Color.fromARGB(255, 0, 0, 0))),
-                            value: _demoMode,
-                            onChanged: (v) => setState(() => _demoMode = v),
-                          ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 50),
                 SizedBox(
               width: double.infinity,
               child: ElevatedButton(

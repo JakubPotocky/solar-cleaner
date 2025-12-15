@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:semesterproject5/controls.dart';
+import 'package:semesterproject5/pump_screen.dart';
+import 'package:semesterproject5/motor_details_screen.dart';
+import 'package:semesterproject5/map_screen.dart';
+import 'package:semesterproject5/cleaning_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String name;
@@ -37,11 +41,31 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () => _select(1),
             ),
             ListTile(
-              leading: const Icon(Icons.gamepad),
-              title: const Text('Controls'),
+              leading: const Icon(Icons.water),
+              title: const Text('Pump'),
               selected: _selectedIndex == 2,
               onTap: () => _select(2),
             ),
+            ListTile(
+              leading: const Icon(Icons.cleaning_services),
+              title: const Text('Cleaning'),
+              selected: _selectedIndex == 3,
+              onTap: () => _select(3),
+            ),
+
+            ListTile(
+              leading: const Icon(Icons.map),
+              title: const Text('Map'),
+              selected: _selectedIndex == 4,
+              onTap: () => _select(4),
+            ),
+            ListTile(
+              leading: const Icon(Icons.gamepad),
+              title: const Text('Controls'),
+              selected: _selectedIndex == 5,
+              onTap: () => _select(5),
+            ),
+
             const Spacer(),
             ListTile(
               leading: const Icon(Icons.logout),
@@ -59,13 +83,14 @@ class _HomeScreenState extends State<HomeScreen> {
     final screens = <Widget>[
       _DashboardScreen(name: widget.name, demoMode: widget.demoMode),
       const MotorsScreen(),
+      const PumpScreen(),
+      const CleaningScreen(),             
+      const MapScreen(),
       const Controls(),
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Home'),
-      ),
+      appBar: AppBar(title: const Text('Home')),
       drawer: _buildDrawer(),
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 250),
@@ -97,9 +122,15 @@ class _DashboardScreen extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Robot Status', style: TextStyle(fontWeight: FontWeight.w600)),
+                      const Text(
+                        'Robot Status',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
                       const SizedBox(height: 12),
-                      const Text('Uptime', style: TextStyle(color: Colors.grey)),
+                      const Text(
+                        'Uptime',
+                        style: TextStyle(color: Colors.grey),
+                      ),
                       const SizedBox(height: 4),
                       const Text('48h 23m'),
                     ],
@@ -107,9 +138,18 @@ class _DashboardScreen extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Chip(label: Text('Operational', style: TextStyle(color: Colors.white)), backgroundColor: Colors.green),
+                      Chip(
+                        label: Text(
+                          'Operational',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        backgroundColor: Colors.green,
+                      ),
                       const SizedBox(height: 12),
-                      const Text('Temperature', style: TextStyle(color: Colors.grey)),
+                      const Text(
+                        'Temperature',
+                        style: TextStyle(color: Colors.grey),
+                      ),
                       const SizedBox(height: 4),
                       const Text('42°C'),
                     ],
@@ -125,7 +165,10 @@ class _DashboardScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Summary', style: TextStyle(fontWeight: FontWeight.w600)),
+                  const Text(
+                    'Summary',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -167,51 +210,55 @@ class _SmallStat extends StatelessWidget {
 class MotorsScreen extends StatelessWidget {
   const MotorsScreen({super.key});
 
-  Widget _motorCard(String title, String speed, String temp, String current) {
+  Widget _motorCard(
+    BuildContext context,
+    String title,
+    String speed,
+    String temp,
+    String current,
+  ) {
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-                Chip(label: const Text('Operational', style: TextStyle(color: Colors.white)), backgroundColor: Colors.green),
-              ],
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => MotorDetailsScreen(motorName: title),
             ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Speed', style: TextStyle(color: Colors.grey)),
-                    const SizedBox(height: 4),
-                    Text(speed),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Temperature', style: TextStyle(color: Colors.grey)),
-                    const SizedBox(height: 4),
-                    Text(temp),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Current', style: TextStyle(color: Colors.grey)),
-                    const SizedBox(height: 4),
-                    Text(current),
-                  ],
-                ),
-              ],
-            ),
-          ],
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  Chip(
+                    label: const Text(
+                      'Operational',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    backgroundColor: Colors.green,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _miniStat('Speed', speed),
+                  _miniStat('Temp', temp),
+                  _miniStat('Current', current),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -220,9 +267,36 @@ class MotorsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final motors = [
-      {'title': 'Motor 1 - Base Rotation', 'speed': '1200 RPM', 'temp': '38°C', 'current': '2.4A'},
-      {'title': 'Motor 2 - Arm Joint 1', 'speed': '980 RPM', 'temp': '41°C', 'current': '2.1A'},
-      {'title': 'Motor 3 - Arm Joint 2', 'speed': '1050 RPM', 'temp': '39°C', 'current': '2.3A'},
+      {
+        'title': 'Motor 1 - Water Pump',
+        'speed': '1200 RPM',
+        'temp': '38°C',
+        'current': '6.4A',
+      },
+      {
+        'title': 'Motor 2 - Wheels',
+        'speed': '2200 RPM',
+        'temp': '42°C',
+        'current': '4.4A',
+      },
+      {
+        'title': 'Motor 3 - Arm Joint 1',
+        'speed': '980 RPM',
+        'temp': '41°C',
+        'current': '4.1A',
+      },
+      {
+        'title': 'Motor 4 - Arm Joint 2',
+        'speed': '1050 RPM',
+        'temp': '39°C',
+        'current': '6.3A',
+      },
+      {
+        'title': 'Motor 5 - Wheel rotation',
+        'speed': '0 RPM',
+        'temp': '39°C',
+        'current': '2.3A',
+      },
     ];
 
     return ListView.builder(
@@ -232,12 +306,32 @@ class MotorsScreen extends StatelessWidget {
         if (index == 0) {
           return const Padding(
             padding: EdgeInsets.only(bottom: 8.0),
-            child: Text('Motor Status', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+            child: Text(
+              'Motor Status',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
           );
         }
         final m = motors[index - 1];
-        return _motorCard(m['title']!, m['speed']!, m['temp']!, m['current']!);
+        return _motorCard(
+          context,
+          m['title']!,
+          m['speed']!,
+          m['temp']!,
+          m['current']!,
+        );
       },
     );
   }
+}
+
+Widget _miniStat(String label, String value) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(label, style: const TextStyle(color: Colors.grey)),
+      const SizedBox(height: 4),
+      Text(value),
+    ],
+  );
 }

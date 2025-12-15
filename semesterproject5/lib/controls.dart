@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:mqtt_client/mqtt_client.dart';
-import 'package:mqtt_client/mqtt_server_client.dart';
+// import 'package:mqtt_client/mqtt_client.dart';
+// import 'package:mqtt_client/mqtt_server_client.dart';
 
 class Controls extends StatefulWidget {
-  const Controls({Key? key, this.title = 'Flutter control app'}) : super(key: key);
+  const Controls({Key? key, this.title = 'Flutter control app'})
+    : super(key: key);
 
   final String title;
 
@@ -12,108 +13,51 @@ class Controls extends StatefulWidget {
 }
 
 class _ControlsState extends State<Controls> {
-  // Simple state to demonstrate control actions
+  // ---------------- DEMO FLAG ----------------
+  static const bool demoMode = true;
+  // -------------------------------------------
+
   String _carState = 'Stopped';
-  int _armPosition = 0; // arbitrary units
+  int _armPosition = 0;
   String _lastAction = 'None';
 
-  // MQTT
-  late MqttServerClient _client;
   bool _isConnected = false;
-
-  static const String host = '192.168.137.121';
-  static const int port = 1883;
-  static const String topic = 'robot-movement';
 
   @override
   void initState() {
     super.initState();
+  }
 
-  _client = MqttServerClient.withPort(host, 'flutter_client', port);
+  // ---------------- FAKE CONNECT ----------------
+  Future<void> _connectMQTT() async {
+    setState(() {
+      _lastAction = demoMode
+          ? 'Demo mode: Connected to MQTT'
+          : 'Connecting to MQTT...';
+    });
 
-  _client.logging(on: true);
-  _client.keepAlivePeriod = 20;
-  _client.secure = false;       // IMPORTANT on Android
-  _client.useWebSocket = false; // Force raw TCP
-  _client.onDisconnected = _onDisconnected;
+    await Future.delayed(const Duration(seconds: 1));
 
-  _client.onConnected = () {
     setState(() {
       _isConnected = true;
-      _lastAction = 'Connected to MQTT';
-    });
-  };
-
-  _client.onSubscribed = (String topic) {
-    setState(() {
-      _lastAction = 'Subscribed to $topic';
-    });
-  };
-
-  _client.pongCallback = () {
-    // ignore: avoid_print
-    print('MQTT ping response');
-  };
-
-  _client.setProtocolV311(); // Many brokers require v3.1.1
-  }
-
-  Future<void> _connectMQTT() async {
-  setState(() => _lastAction = "Connecting to MQTT...");
-  try {
-    // Do not set Will QoS/topic unless you also set a Will topic and payload.
-    final connMessage = MqttConnectMessage()
-        .withClientIdentifier('flutter_client_${DateTime.now().millisecondsSinceEpoch}')
-        .startClean(); // clean session
-
-    _client.connectionMessage = connMessage;
-
-    // Connect without credentials (HiveMQ CE often allows anonymous by default)
-    await _client.connect();
-
-    final state = _client.connectionStatus?.state;
-    final code = _client.connectionStatus?.returnCode;
-
-    if (state == MqttConnectionState.connected) {
-      setState(() {
-        _isConnected = true;
-        _lastAction = 'Connected (returnCode=$code)';
-      });
-      _client.subscribe(topic, MqttQos.atLeastOnce);
-    } else {
-      setState(() {
-        _lastAction = 'Connection failed: state=$state returnCode=$code';
-      });
-      _client.disconnect();
-    }
-  } catch (e, st) {
-    setState(() {
-      _lastAction = 'MQTT Error: $e';
-    });
-    // ignore: avoid_print
-    print('MQTT connect exception: $e\n$st');
-    _client.disconnect();
-  }
-}
-
-  void _onDisconnected() {
-    setState(() {
-      _isConnected = false;
-      _lastAction = "Disconnected from MQTT";
+      _lastAction = demoMode
+          ? 'Demo mode: MQTT connected'
+          : 'Connected to MQTT';
     });
   }
 
+  // ---------------- FAKE PUBLISH ----------------
   void _publish(String message) {
     if (!_isConnected) return;
 
-    final builder = MqttClientPayloadBuilder();
-    builder.addString(message);
-
-    _client.publishMessage(topic, MqttQos.atLeastOnce, builder.payload!);
+    if (demoMode) {
+      // ignore: avoid_print
+      print('[DEMO MQTT] $message');
+      return;
+    }
   }
 
-  // ---- BUTTON LOGIC ----
-
+  // ---------------- BUTTON LOGIC ----------------
   void _moveCar(String action) {
     if (!_isConnected) return;
 
@@ -150,125 +94,187 @@ class _ControlsState extends State<Controls> {
       _lastAction = 'Arm: ${delta > 0 ? 'Up' : 'Down'}';
     });
 
-    // motor3 controls arm
     _publish("motor3:${delta > 0 ? '+10' : '-10'}");
   }
 
-  Widget _buildCircleButton(IconData icon, VoidCallback onPressed) {
-    return SizedBox(
-      width: 64,
-      height: 64,
-      child: ElevatedButton(
-        onPressed: _isConnected ? onPressed : null,
-        style: ElevatedButton.styleFrom(
-          shape: const CircleBorder(),
-          padding: const EdgeInsets.all(12),
-        ),
-        child: Icon(icon, size: 28),
+  // ---------------- UI HELPERS ----------------
+  Widget _sectionTitle(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        text,
+        style: Theme.of(
+          context,
+        ).textTheme.titleMedium!.copyWith(fontWeight: FontWeight.w600),
       ),
     );
   }
 
+  Widget _statusChip() {
+    return Chip(
+      avatar: Icon(
+        _isConnected ? Icons.cloud_done : Icons.cloud_off,
+        size: 18,
+        color: _isConnected ? Colors.green : Colors.red,
+      ),
+      label: Text(
+        _isConnected
+            ? (demoMode ? 'Connected (Demo)' : 'Connected')
+            : 'Disconnected',
+      ),
+    );
+  }
+
+  Widget _controlButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return SizedBox(
+      width: 72,
+      height: 72,
+      child: FilledButton(
+        onPressed: _isConnected ? onPressed : null,
+        style: FilledButton.styleFrom(shape: const CircleBorder()),
+        child: Icon(icon, size: 30),
+      ),
+    );
+  }
+
+  // ---------------- BUILD ----------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // MQTT CONNECT BUTTON
-            ElevatedButton(
-              onPressed: _isConnected ? null : _connectMQTT,
-              child: Text(_isConnected ? "Connected" : "Connect to MQTT"),
-            ),
-            const SizedBox(height: 16),
-
-            // ARM CONTROL
+            // CONNECTION
             Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Arm Control', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildCircleButton(Icons.arrow_upward, () => _moveArm(1)),
-                        const SizedBox(width: 16),
-                        _buildCircleButton(Icons.arrow_downward, () => _moveArm(-1)),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text('Arm position: $_armPosition'),
-                  ],
-                ),
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
-            ),
-            const SizedBox(height: 16),
-
-            // MOVEMENT CONTROL
-            Card(
               child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Movement Controls', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 12),
-                    Center(child: _buildCircleButton(Icons.arrow_upward, () => _moveCar('Forward'))),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildCircleButton(Icons.arrow_back, () => _moveCar('Left')),
-                        SizedBox(
-                          width: 64,
-                          height: 64,
-                          child: ElevatedButton(
-                            onPressed: _isConnected ? () => _moveCar('Stopped') : null,
-                            style: ElevatedButton.styleFrom(shape: const StadiumBorder()),
-                            child: const Text('Stop'),
-                          ),
-                        ),
-                        _buildCircleButton(Icons.arrow_forward, () => _moveCar('Right')),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Center(child: _buildCircleButton(Icons.arrow_downward, () => _moveCar('Back'))),
-                    const SizedBox(height: 8),
-                    Text('Car state: $_carState'),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // LAST ACTION
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
+                padding: const EdgeInsets.all(16),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Last action: $_lastAction'),
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _lastAction = 'None';
-                        });
-                      },
-                      child: const Text('Clear'),
+                    _statusChip(),
+                    FilledButton.icon(
+                      onPressed: _isConnected ? null : _connectMQTT,
+                      icon: const Icon(Icons.power),
+                      label: const Text('Connect'),
                     ),
                   ],
                 ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // ARM CONTROL
+            _sectionTitle('Arm Control'),
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _controlButton(
+                          icon: Icons.keyboard_arrow_up,
+                          onPressed: () => _moveArm(1),
+                        ),
+                        const SizedBox(width: 24),
+                        _controlButton(
+                          icon: Icons.keyboard_arrow_down,
+                          onPressed: () => _moveArm(-1),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text('Position: $_armPosition'),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // MOVEMENT
+            _sectionTitle('Movement'),
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    _controlButton(
+                      icon: Icons.arrow_upward,
+                      onPressed: () => _moveCar('Forward'),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _controlButton(
+                          icon: Icons.arrow_back,
+                          onPressed: () => _moveCar('Left'),
+                        ),
+                        const SizedBox(width: 16),
+                        FilledButton(
+                          onPressed: _isConnected
+                              ? () => _moveCar('Stopped')
+                              : null,
+                          style: FilledButton.styleFrom(
+                            shape: const StadiumBorder(),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 16,
+                            ),
+                          ),
+                          child: const Text('STOP'),
+                        ),
+
+                        const SizedBox(width: 16),
+                        _controlButton(
+                          icon: Icons.arrow_forward,
+                          onPressed: () => _moveCar('Right'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _controlButton(
+                      icon: Icons.arrow_downward,
+                      onPressed: () => _moveCar('Back'),
+                    ),
+                    const SizedBox(height: 12),
+                    Text('State: $_carState'),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // LAST ACTION
+            Card(
+              elevation: 1,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text('Last action: $_lastAction'),
               ),
             ),
           ],
